@@ -2,6 +2,7 @@ package api.server;
 
 import api.endpoints.News;
 import api.endpoints.Stats;
+import api.endpoints.Template;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
@@ -15,7 +16,8 @@ public class Server extends AbstractVerticle {
 
 		Router router = Router.router(vertx)
 				.mountSubRouter("/api", new News(vertx).route())
-				.mountSubRouter("/api", new Stats(vertx).route());
+				.mountSubRouter("/api", new Stats(vertx).route())
+				.mountSubRouter("/api", new Template(vertx).route());
 
 		server = vertx.createHttpServer()
 				.requestHandler(router::accept).listen(8080, res -> {

@@ -4,6 +4,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
 public class Stats implements Endpoint {
 
@@ -17,7 +18,8 @@ public class Stats implements Endpoint {
 	public Router route() {
 		
 		Router router = Router.router(vertx);
-		router.route(HttpMethod.GET, "/stats").blockingHandler(this::getStats);
+		router.route(HttpMethod.GET, "/stats")
+			.blockingHandler(this::getStats);
 
 		return router;
 	}
