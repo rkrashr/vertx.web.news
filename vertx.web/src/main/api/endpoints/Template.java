@@ -1,5 +1,6 @@
 package api.endpoints;
 
+import org.joda.time.DateTime;
 import org.thymeleaf.templatemode.TemplateMode;
 
 import io.vertx.core.Handler;
@@ -18,6 +19,10 @@ public class Template implements Handler<RoutingContext> {
 
 	public void handle(RoutingContext context) {
 		System.out.println("rendering!");
+		
+		context.put("foo", DateTime.now());
+		context.put("bar", DateTime.now());
+		
 		engine.render(context, "templates/", "home.html", (res) -> {context.request().response().end(res.otherwiseEmpty().result());});
 		
 	}
