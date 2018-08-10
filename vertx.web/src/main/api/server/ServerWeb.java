@@ -10,7 +10,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 
-public class Server extends AbstractVerticle {
+public class ServerWeb extends AbstractVerticle {
 
 	private HttpServer server;
 
