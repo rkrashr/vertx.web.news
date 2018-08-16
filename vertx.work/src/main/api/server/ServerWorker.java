@@ -1,24 +1,40 @@
 package api.server;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import org.joda.time.DateTime;
+import org.joda.time.Period;
+
 import api.endpoints.Stats;
+import api.fetch.Fetcher;
+import api.parse.Parser;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.TimeoutStream;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
+import io.vertx.rx.java.RxHelper;
+
 
 public class ServerWorker extends AbstractVerticle {
 
 	private static String DEFAULT_HOST = "0.0.0.0";
 	private static int DEFAULT_PORT = 8080;
+	private static String DEFAULT_INTERVAL = "PT1S";
+	private static String DEFAULT_URL = "";
 
 	private String host;
 	private int port;
+	private Period interval;
+	private URL url;
 
 	private HttpServer server;
 
@@ -27,6 +43,7 @@ public class ServerWorker extends AbstractVerticle {
 		configure()
 		.compose(v -> this.makeRoutes())
 		.compose(router -> this.startServer(router))
+		.compose(v -> this.startFetcher(interval))
 		.setHandler(startFuture.completer());
 	}
 	
@@ -61,6 +78,8 @@ public class ServerWorker extends AbstractVerticle {
 				.addStore(fileStore);
 
 		ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
+		
+		
 
 		retriever.getConfig(ar -> {
 			if (ar.failed()) {
@@ -69,6 +88,12 @@ public class ServerWorker extends AbstractVerticle {
 				JsonObject config = ar.result();
 			    host = config.getString("address", DEFAULT_HOST);
 			    port = config.getInteger("port", DEFAULT_PORT);
+			    interval = Period.parse(config.getString("interval", DEFAULT_INTERVAL));
+			    try {
+					url = new URL(config.getString("url",DEFAULT_URL));
+				} catch (MalformedURLException e) {
+					future.fail(new IOException("Bad url", e));
+				}
 			    System.out.println("** configured **");
 			    future.complete();
 			}
@@ -113,6 +138,29 @@ public class ServerWorker extends AbstractVerticle {
 				}
 			});
 		
+		return future;
+	}
+	
+	private Future<Void> startFetcher(Period period) {
+
+		System.out.println("** start fetcher **");
+		
+		Future<Void> future = Future.future();
+
+		Fetcher fetcher = new Fetcher(url, DateTime.now().minusDays(5));
+		Parser parser = new Parser();
+		
+		TimeoutStream stream = vertx
+			.periodicStream(interval.toDurationFrom(DateTime.now()).getMillis());
+
+		RxHelper.toObservable(stream)
+		.flatMap(timestamp -> fetcher.next()).map(entry -> parser.parse(entry))
+		.subscribe(
+				article -> System.out.println(article), 
+				ex -> System.out.println(ex), 
+				() -> System.out.println("done"));
+				
+		future.complete();
 		return future;
 	}
 }
