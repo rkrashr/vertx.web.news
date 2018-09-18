@@ -9,12 +9,15 @@ import org.joda.time.Period;
 
 import api.endpoints.Stats;
 import api.fetch.Fetcher;
+import api.parse.Article;
 import api.parse.Parser;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.TimeoutStream;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -154,13 +157,30 @@ public class ServerWorker extends AbstractVerticle {
 			.periodicStream(interval.toDurationFrom(DateTime.now()).getMillis());
 
 		RxHelper.toObservable(stream)
-		.flatMap(timestamp -> fetcher.next()).map(entry -> parser.parse(entry))
+		.flatMap(timestamp -> fetcher.next())
+		.map(entry -> parser.parse(entry))
 		.subscribe(
-				article -> System.out.println(article), 
+				article -> article.setHandler(new Handler<AsyncResult<Article>>() {
+
+					@Override
+					public void handle(AsyncResult<Article> event) {
+
+						if (event.succeeded()) {
+							Article a = event.result();
+							System.out.println(a);
+						}
+						else
+							event.cause().printStackTrace();
+					}
+					
+				}), 
 				ex -> System.out.println(ex), 
 				() -> System.out.println("done"));
 				
 		future.complete();
 		return future;
 	}
+	
+	
+	
 }
