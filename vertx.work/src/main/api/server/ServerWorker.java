@@ -148,7 +148,7 @@ public class ServerWorker extends AbstractVerticle {
 		Future<Void> future = Future.future();
 
 		Fetcher fetcher = new Fetcher(url, DateTime.now().minusDays(5));
-		Parser parser = new Parser();
+		Parser parser = new Parser(vertx);
 		
 		TimeoutStream stream = vertx
 			.periodicStream(interval.toDurationFrom(DateTime.now()).getMillis());
