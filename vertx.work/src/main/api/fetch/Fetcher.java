@@ -32,6 +32,7 @@ public class Fetcher {
 			List<SyndEntry> entries = feed.getEntries();
 			
 			Date limit = Date.from(since.toInstant());
+			System.out.println(limit);
 			Stream<SyndEntry> filtered = feed.getEntries().stream().filter(entry -> entry.getPublishedDate().after(limit));
 
 			this.since = entries

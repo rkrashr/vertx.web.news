@@ -28,7 +28,7 @@ public class ServerWorker extends AbstractVerticle {
 
 	private static String DEFAULT_HOST = "0.0.0.0";
 	private static int DEFAULT_PORT = 8080;
-	private static String DEFAULT_INTERVAL = "PT1S";
+	private static String DEFAULT_INTERVAL = "PT10S";
 	private static String DEFAULT_URL = "";
 
 	private String host;

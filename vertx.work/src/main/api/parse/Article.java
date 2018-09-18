@@ -11,7 +11,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
-import io.vertx.rxjava.core.Future;
+import io.vertx.core.Future;
 
 public class Article {
 
@@ -31,23 +31,25 @@ public class Article {
 		return title;
 	}
 
-	public Future<Void> fetch(Vertx vertx) {
+	public Future<Article> fetch(Vertx vertx) {
 
-		Future<Void> future = Future.future();
+		Future<Article> future = Future.future();
 
 		try {
 			URL _url = new URL(url);
-
+			System.out.println(url);
+			final Article a = this;
 			HttpClientRequest req = vertx.createHttpClient().get(url, new Handler<HttpClientResponse>() {
 				public void handle(HttpClientResponse response) {
+					System.out.println(response);
 					response.bodyHandler(new Handler<Buffer>() {
 						public void handle(Buffer data) {
-							System.out.println("Got response data:" + data);
+							System.out.println("Got response data:" + data.toString());
+							future.complete(a);
 						}
 					});
 				}
 			});
-			
 			req.end();
 			
 		} catch (MalformedURLException e) {

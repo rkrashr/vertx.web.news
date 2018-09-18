@@ -16,9 +16,9 @@ public class Parser {
 	public Future<Article> parse(SyndEntry entry)  {
 		
 	
-		Future<Article> future = Future.future();
-		Article article = new Article(entry);
-		article.fetch(vertx);
+		Future<Article> future1 = Future.future();
+		future1.complete(new Article(entry));
+		Future<Article> future = future1.compose(a -> a.fetch(vertx));
 		return future;
 	}
 	
