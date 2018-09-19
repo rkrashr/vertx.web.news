@@ -14,12 +14,12 @@ import com.rometools.rome.io.XmlReader;
 
 import rx.Observable;
 
-public class Fetcher {
+public class FetcherRSS {
 
 	URL url;
 	Date since;
 	
-	public Fetcher(URL url, DateTime since) {
+	public FetcherRSS(URL url, DateTime since) {
 		this.url = url;
 		this.since = since.toDate();
 	}

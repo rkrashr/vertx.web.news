@@ -1,15 +1,13 @@
-package api.parse;
+package api.article;
 
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 
 import com.rometools.rome.feed.synd.SyndEntry;
-import com.rometools.rome.feed.synd.SyndPerson;
 
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -20,30 +18,35 @@ import io.vertx.core.http.HttpClientResponse;
 
 public class Article {
 
-	String title;
-	String body;
-	String url;
-	List<SyndPerson> authors;
-	String author;
-	Document document;
+	public String title;
+	public String url;
+	public List<String> authors;
+	public String author;
+	public String text;
+	public String summary;
+	public String headline;
+	public String source;
+	
 
 	public Article(SyndEntry article) {
 		this.title = article.getTitle();
 		this.url = article.getLink();
 		this.author = article.getAuthor();
-		this.authors = article.getAuthors();
-		this.body = "";
+		this.authors = article.getAuthors()
+				.stream()
+				.map(author -> author.getName())
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this,ToStringStyle.JSON_STYLE)
 			.append("title", title)
+			.append("headline", headline)
+			.append("summary", summary)
 			.append("url", url)
-			.append("body_size", body.length())
-			.append("document", document.body().childNodeSize())
+			.append("source_size", source.length())
 			.append("author", author)
-			.append("authors", authors)
 			.build();
 	}
 
@@ -56,8 +59,7 @@ public class Article {
 			public void handle(HttpClientResponse response) {
 				response.bodyHandler(new Handler<Buffer>() {
 					public void handle(Buffer data) {
-						a.body = data.toString(Charset.defaultCharset());
-						a.document = Jsoup.parse(a.body);
+						a.source = data.toString(Charset.defaultCharset());
 						future.complete(a);
 					}
 				});

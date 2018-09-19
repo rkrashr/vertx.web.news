@@ -2,14 +2,15 @@ package api.parse;
 
 import com.rometools.rome.feed.synd.SyndEntry;
 
+import api.article.Article;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
-public class Parser {
+public class ParserRSS {
 
 	Vertx vertx;
 	
-	public Parser(Vertx vertx) {
+	public ParserRSS(Vertx vertx) {
 		this.vertx = vertx;
 	}
 	

@@ -7,10 +7,11 @@ import java.net.URL;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
+import api.article.Article;
 import api.endpoints.Stats;
-import api.fetch.Fetcher;
-import api.parse.Article;
-import api.parse.Parser;
+import api.fetch.FetcherRSS;
+import api.parse.ParserCBC;
+import api.parse.ParserRSS;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
@@ -150,15 +151,17 @@ public class ServerWorker extends AbstractVerticle {
 		
 		Future<Void> future = Future.future();
 
-		Fetcher fetcher = new Fetcher(url, DateTime.now().minusDays(5));
-		Parser parser = new Parser(vertx);
+		FetcherRSS fetcher = new FetcherRSS(url, DateTime.now().minusDays(5));
+		ParserRSS rssParser = new ParserRSS(vertx);
+		ParserCBC cbcParser = new ParserCBC(vertx);
 		
 		TimeoutStream stream = vertx
 			.periodicStream(interval.toDurationFrom(DateTime.now()).getMillis());
 
 		RxHelper.toObservable(stream)
 		.flatMap(timestamp -> fetcher.next())
-		.map(entry -> parser.parse(entry))
+		.map(entry -> rssParser.parse(entry))
+		.map(article -> cbcParser.parse(article))
 		.subscribe(
 				article -> article.setHandler(new Handler<AsyncResult<Article>>() {
 
