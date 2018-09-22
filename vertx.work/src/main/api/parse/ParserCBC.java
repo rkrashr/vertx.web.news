@@ -28,5 +28,4 @@ public class ParserCBC {
 		article.headline = doc.getElementsByClass("detailHeadline").eachText().stream().collect(Collectors.joining("\n"));
 		return article;
 	}
-	
 }

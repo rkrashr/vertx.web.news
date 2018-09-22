@@ -1,6 +1,8 @@
 package api.article;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,10 @@ public class Article {
 	public String summary;
 	public String headline;
 	public String source;
+	public List<String> categories;
+	public List<String> keywords;
+	public Date published;
+	public Date updated;
 	
 
 	public Article(SyndEntry article) {
@@ -36,6 +42,10 @@ public class Article {
 				.stream()
 				.map(author -> author.getName())
 				.collect(Collectors.toList());
+		this.categories = article.getCategories().stream().map(c -> c.getName()).collect(Collectors.toList());
+		this.keywords = Collections.emptyList();
+		this.published = article.getPublishedDate();
+		this.updated = article.getUpdatedDate();
 	}
 
 	@Override
@@ -44,9 +54,13 @@ public class Article {
 			.append("title", title)
 			.append("headline", headline)
 			.append("summary", summary)
+			.append("categories", categories)
+			.append("keywords", keywords)
 			.append("url", url)
 			.append("source_size", source.length())
 			.append("author", author)
+			.append("published", published)
+			.append("updated", updated)
 			.build();
 	}
 
