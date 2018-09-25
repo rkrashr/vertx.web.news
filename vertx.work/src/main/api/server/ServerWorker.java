@@ -20,9 +20,15 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.TimeoutStream;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.oauth2.OAuth2Auth;
+import io.vertx.ext.auth.oauth2.OAuth2ClientOptions;
+import io.vertx.ext.auth.oauth2.OAuth2FlowType;
+import io.vertx.ext.auth.oauth2.providers.AzureADAuth;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.rx.java.RxHelper;
@@ -39,15 +45,25 @@ public class ServerWorker extends AbstractVerticle {
 	private int port;
 	private Period interval;
 	private URL url;
+	
+	private OAuth2Auth oauth2;
+
+	private String clientId;
+	private String clientSecret;
+	private String tenantId;
+	
+	private String accessToken;
 
 	private HttpServer server;
 
 	public void start(Future<Void> startFuture) {
 
 		configure()
-		.compose(v -> this.makeRoutes())
+		.compose(f -> this.initAuth())
+		.compose(f -> this.auth(accessToken))
+		.compose(f -> this.makeRoutes())
 		.compose(router -> this.startServer(router))
-		.compose(v -> this.startFetcher(interval))
+		.compose(f -> this.startFetcher(interval))
 		.setHandler(startFuture.completer());
 	}
 	
@@ -93,6 +109,7 @@ public class ServerWorker extends AbstractVerticle {
 			    host = config.getString("address", DEFAULT_HOST);
 			    port = config.getInteger("port", DEFAULT_PORT);
 			    interval = Period.parse(config.getString("interval", DEFAULT_INTERVAL));
+			    accessToken = config.getString("access-token", "");
 			    try {
 					url = new URL(config.getString("url",DEFAULT_URL));
 				} catch (MalformedURLException e) {
@@ -106,7 +123,50 @@ public class ServerWorker extends AbstractVerticle {
 		return future;
 	}
 	
+	private Future<Void> initAuth() {
+
+		//oauth2 = AzureADAuth.create(vertx, "eb5429df-8cd3-41d7-ae4a-200dc35cb532", "4w5sM8Rdgse2O54xrEB27jbO0WxTugSDoskDO61JR48=", "e1a307b4-be44-4907-98e6-5eb51608bd54");
+		
+		oauth2 = OAuth2Auth.create(vertx, OAuth2FlowType.CLIENT, new OAuth2ClientOptions(new HttpClientOptions())
+		        .setSite("https://login.windows.net/" + "e1a307b4-be44-4907-98e6-5eb51608bd54")
+		        .setTokenPath("/oauth2/token")
+		        .setAuthorizationPath("/oauth2/authorize")
+		        .setScopeSeparator(",")
+		        .setClientID("eb5429df-8cd3-41d7-ae4a-200dc35cb532")
+		        .setClientSecret("4w5sM8Rdgse2O54xrEB27jbO0WxTugSDoskDO61JR48=")
+		        .setExtraParameters(
+		          new JsonObject().put("resource", "https://management.core.windows.net/")));
+		
+		
+		
+		System.out.println("Azure authenticator created");
+		return Future.succeededFuture();
+	}
 	
+	private Future<User> auth(String accessToken) {
+
+		Future<User> future = Future.future();
+		
+		JsonObject tokenConfig = new JsonObject()
+			    .put("code", accessToken);
+
+		oauth2.authenticate(tokenConfig, res -> {
+			System.out.println(tokenConfig);
+			if (res.failed()) {
+				System.err.println("Access Token Error: " + res.cause().getMessage());
+				future.fail(res.cause().getMessage());
+			} else {
+				User token = res.result();
+				System.out.println(token);
+				System.out.println(token.principal());
+
+				future.complete(token);
+			}
+		});
+			
+		return future;
+	}
+
 	private Future<Router> makeRoutes() {
 		System.out.println("** configure routes **");
 		
