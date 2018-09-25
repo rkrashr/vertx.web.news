@@ -109,7 +109,13 @@ public class ServerWorker extends AbstractVerticle {
 			    host = config.getString("address", DEFAULT_HOST);
 			    port = config.getInteger("port", DEFAULT_PORT);
 			    interval = Period.parse(config.getString("interval", DEFAULT_INTERVAL));
-			    accessToken = config.getString("access-token", "");
+
+			    tenantId = config.getString("tenant-id");
+			    clientId = config.getString("client-id");
+			    clientSecret = config.getString("client-secret");
+
+			    accessToken = config.getString("access-token");
+
 			    try {
 					url = new URL(config.getString("url",DEFAULT_URL));
 				} catch (MalformedURLException e) {
@@ -125,15 +131,13 @@ public class ServerWorker extends AbstractVerticle {
 	
 	private Future<Void> initAuth() {
 
-		//oauth2 = AzureADAuth.create(vertx, "eb5429df-8cd3-41d7-ae4a-200dc35cb532", "4w5sM8Rdgse2O54xrEB27jbO0WxTugSDoskDO61JR48=", "e1a307b4-be44-4907-98e6-5eb51608bd54");
-		
 		oauth2 = OAuth2Auth.create(vertx, OAuth2FlowType.CLIENT, new OAuth2ClientOptions(new HttpClientOptions())
-		        .setSite("https://login.windows.net/" + "e1a307b4-be44-4907-98e6-5eb51608bd54")
+		        .setSite("https://login.windows.net/" + tenantId)
 		        .setTokenPath("/oauth2/token")
 		        .setAuthorizationPath("/oauth2/authorize")
 		        .setScopeSeparator(",")
-		        .setClientID("eb5429df-8cd3-41d7-ae4a-200dc35cb532")
-		        .setClientSecret("4w5sM8Rdgse2O54xrEB27jbO0WxTugSDoskDO61JR48=")
+		        .setClientID(clientId)
+		        .setClientSecret(clientSecret)
 		        .setExtraParameters(
 		          new JsonObject().put("resource", "https://management.core.windows.net/")));
 		
@@ -157,9 +161,6 @@ public class ServerWorker extends AbstractVerticle {
 				future.fail(res.cause().getMessage());
 			} else {
 				User token = res.result();
-				System.out.println(token);
-				System.out.println(token.principal());
-
 				future.complete(token);
 			}
 		});
