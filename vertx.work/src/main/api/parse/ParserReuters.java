@@ -2,11 +2,12 @@ package api.parse;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import api.article.Article;
 import io.vertx.core.Future;
@@ -30,7 +31,14 @@ public class ParserReuters {
 				.stream()
 				.collect(Collectors.toMap(e -> e.attributes().get("name"), e -> e.attributes().get("content")));
 		
-		article.text = doc.getElementsByClass("StandardArticleBody_body").select("p").eachText().stream().collect(Collectors.joining("\n"));
+		article.text = Optional
+				.ofNullable(doc.getElementsByClass("StandardArticleBody_body"))
+				.orElse(new Elements())
+				.select("p")
+				.eachText()
+				.stream()
+				.collect(Collectors.joining("\n"));
+		
 		article.summary = meta.get("description");
 		article.keywords = Arrays.asList(meta.get("keywords").split(","));
 		return article;

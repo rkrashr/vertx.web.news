@@ -1,7 +1,7 @@
 package api.endpoints;
 
 import io.vertx.core.Handler;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.rxjava.ext.web.RoutingContext;
 
 public class Stats implements Handler<RoutingContext> {
 

@@ -1,7 +1,8 @@
 {
 	"host": "0.0.0.0",
 	"port": 18080,
-	"url": "https://rss.cbc.ca/lineup/topstories.xml",
+	"interval": "PT10S",
+	"url": "http://rss.cnn.com/rss/money_latest.rss",
 	"tenant-id": "e1a307b4-be44-4907-98e6-5eb51608bd54",
 	"client-id": "eb5429df-8cd3-41d7-ae4a-200dc35cb532",
 	"client-secret": "4w5sM8Rdgse2O54xrEB27jbO0WxTugSDoskDO61JR48=",

@@ -3,24 +3,21 @@ package api.parse;
 import com.rometools.rome.feed.synd.SyndEntry;
 
 import api.article.Article;
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
+import io.vertx.rxjava.ext.web.client.WebClient;
+import rx.Single;
 
 public class ParserRSS {
 
-	Vertx vertx;
+	WebClient client;
 	
-	public ParserRSS(Vertx vertx) {
-		this.vertx = vertx;
+	public ParserRSS(WebClient client) {
+		this.client = client;
 	}
 	
-	public Future<Article> parse(SyndEntry entry)  {
-		
-	
-		Future<Article> future1 = Future.future();
-		future1.complete(new Article(entry));
-		Future<Article> future = future1.compose(a -> a.fetch(vertx));
-		return future;
+	public Single<Article> parse(SyndEntry entry)  {
+		Article article = new Article(entry);
+		return article.fetch(client);
 	}
+	
 	
 }

@@ -1,29 +1,47 @@
 package api.parse;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 import api.article.Article;
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.WorkerExecutor;
+import io.vertx.rx.java.ObservableFuture;
+import io.vertx.rx.java.RxHelper;
+
 
 public class ParserCBC {
 
+	private final Vertx vertx;
+	
 	public ParserCBC(Vertx vertx) {
+		this.vertx = vertx;
 	}
 	
-	public Future<Article> parse(Future<Article> article)  {
+	public ObservableFuture<Article> parse(ObservableFuture<Article> article)  {
+
+		ObservableFuture<Article> future = RxHelper.observableFuture();
+		article.map(doc -> {
+			vertx.executeBlocking(blocking -> blocking.complete(parse(doc)),
+			future.toHandler());
+			return future;
+		});
 		
-		return article.map(a -> parse(a));
+		return future;
 	}
 	
 	private Article parse(Article article) {
 
 		Document doc = Jsoup.parse(article.source);
-		article.text = doc.getElementsByClass("story").eachText().stream().collect(Collectors.joining("\n"));
+		article.text = Optional
+				.ofNullable(doc.getElementsByClass("story"))
+				.orElse(new Elements())
+				.eachText()
+				.stream()
+				.collect(Collectors.joining("\n"));
 		article.summary = doc.getElementsByClass("detailSummary").eachText().stream().collect(Collectors.joining("\n"));
 		article.headline = doc.getElementsByClass("detailHeadline").eachText().stream().collect(Collectors.joining("\n"));
 		return article;

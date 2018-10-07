@@ -8,6 +8,7 @@
   <modules>
     <module>vertx.web</module>
     <module>vertx.work</module>
+    <module>ch</module>
   </modules>
 
 

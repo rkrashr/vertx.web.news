@@ -11,12 +11,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 import com.rometools.rome.feed.synd.SyndEntry;
 
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
+import io.vertx.rxjava.ext.web.client.WebClient;
+import rx.Single;
 
 public class Article {
 
@@ -64,24 +60,13 @@ public class Article {
 			.build();
 	}
 
-	public Future<Article> fetch(Vertx vertx) {
-
-		Future<Article> future = Future.future();
-
+	public Single<Article> fetch(WebClient client) {
 		final Article a = this;
-		HttpClientRequest req = vertx.createHttpClient().getAbs(url, new Handler<HttpClientResponse>() {
-			public void handle(HttpClientResponse response) {
-				response.bodyHandler(new Handler<Buffer>() {
-					public void handle(Buffer data) {
-						a.source = data.toString(Charset.defaultCharset());
-						future.complete(a);
-					}
-				});
-			}
-		});
-		req.end();
 
-		return future;
+		return client.getAbs(url).rxSend().map(response -> {
+			a.source = response.bodyAsString(Charset.defaultCharset().name());
+			return a;
+		});
 	}
 
 }
